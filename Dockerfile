@@ -7,7 +7,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV PATH="/mattermost/bin:${PATH}"
 
 # Build Arguments
-ARG VERSION="11.0.7"
+ARG VERSION="11.1.3"
 ARG PUID=2000
 ARG PGID=2000
 # MM_PACKAGE build arguments controls which version of mattermost to install, defaults to latest stable enterprise
