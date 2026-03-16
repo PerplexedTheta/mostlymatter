@@ -14,8 +14,8 @@ ARG PGID=2000
 # i.e. https://releases.mattermost.com/10.12.4/mattermost-10.12.4-linux-amd64.tar.gz
 ARG MM_PACKAGE="https://releases.mattermost.com/$VERSION/mattermost-$VERSION-linux-amd64.tar.gz"
 # MM_OVERLOAD build arguments controls which file to download, to replace the default mattermost server binary
-# i.e. https://packages.framasoft.org/projects/mostlymatter/mostlymatter-arm64-v10.12.4
-ARG MM_OVERLOAD="https://packages.framasoft.org/projects/mostlymatter/mostlymatter-arm64-v$VERSION"
+# i.e. https://packages.framasoft.org/projects/mostlymatter/mostlymatter-amd64-v10.12.4
+ARG MM_OVERLOAD="https://packages.framasoft.org/projects/mostlymatter/mostlymatter-amd64-v$VERSION"
 
 # # Install needed packages and indirect dependencies
 RUN apt-get update \
@@ -39,7 +39,7 @@ RUN mkdir -p /mattermost/data /mattermost/plugins /mattermost/client/plugins \
   && curl -L $MM_PACKAGE | tar -xvz \
   && mv mattermost/bin/mattermost mattermost/bin/mattermost.bak \
   && chmod a-x mattermost/bin/mattermost.bak \
-  && curl -L $MM_OVERLOAD | tee mattermost/bin/mattermost >/dev/null \
+  && curl -L $MM_OVERLOAD -o mattermost/bin/mattermost >/dev/null \
   && chmod a+x mattermost/bin/mattermost \
   && chown -R mattermost:mattermost /mattermost /mattermost/data /mattermost/plugins /mattermost/client/plugins
 
