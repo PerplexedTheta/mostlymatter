@@ -48,7 +48,7 @@ USER mattermost
 
 # Healthcheck to make sure container is ready
 HEALTHCHECK --interval=30s --timeout=10s \
-  CMD curl -f http://localhost:8065/api/v4/system/ping || exit 1
+  CMD ["/mattermost/bin/mmctl", "system", "status", "--local"]
 
 # Configure entrypoint and command with proper permissions
 COPY --chown=mattermost:mattermost --chmod=765 entrypoint.sh /
