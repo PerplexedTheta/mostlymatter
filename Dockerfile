@@ -7,15 +7,16 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV PATH="/mattermost/bin:${PATH}"
 
 # Build Arguments
-ARG VERSION="11.5.1"
+ARG TARGETARCH ## set by buildx
+ARG VERSION="11.5.2"
 ARG PUID=2000
 ARG PGID=2000
 # MM_PACKAGE build arguments controls which version of mattermost to install, defaults to latest stable enterprise
 # i.e. https://releases.mattermost.com/10.12.4/mattermost-10.12.4-linux-amd64.tar.gz
-ARG MM_PACKAGE="https://releases.mattermost.com/$VERSION/mattermost-$VERSION-linux-amd64.tar.gz"
+ARG MM_PACKAGE="https://releases.mattermost.com/$VERSION/mattermost-$VERSION-linux-$TARGETARCH.tar.gz"
 # MM_OVERLOAD build arguments controls which file to download, to replace the default mattermost server binary
 # i.e. https://packages.framasoft.org/projects/mostlymatter/mostlymatter-amd64-v10.12.4
-ARG MM_OVERLOAD="https://packages.framasoft.org/projects/mostlymatter/mostlymatter-amd64-v$VERSION"
+ARG MM_OVERLOAD="https://packages.framasoft.org/projects/mostlymatter/mostlymatter-$TARGETARCH-v$VERSION"
 
 # # Install needed packages and indirect dependencies
 RUN apt-get update \
