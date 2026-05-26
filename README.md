@@ -7,6 +7,6 @@ Recommended build command:
 ```
 docker buildx build \
     --platform linux/amd64,linux/arm64 \
-    -t ghcr.io/perplexedtheta/mostlymatter:11.7.0 \
+    -t ghcr.io/perplexedtheta/mostlymatter:11.7.1 \
     .
 ```
