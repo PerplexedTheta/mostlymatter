@@ -8,7 +8,7 @@ ENV PATH="/mattermost/bin:${PATH}"
 
 # Build Arguments
 ARG TARGETARCH ## set by buildx
-ARG VERSION="11.9.1"
+ARG VERSION="11.10.0"
 ARG PUID=2000
 ARG PGID=2000
 # MM_PACKAGE build arguments controls which version of mattermost to install, defaults to latest stable enterprise
