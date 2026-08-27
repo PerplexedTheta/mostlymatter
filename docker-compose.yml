@@ -26,7 +26,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-mattermost}
 
   mostlymatter:
-    image: ghcr.io/perplexedtheta/mostlymatter:${MATTERMOST_IMAGE_TAG:-11.7.10}
+    image: ghcr.io/perplexedtheta/mostlymatter:${MATTERMOST_IMAGE_TAG:-11.8.4}
     restart: ${RESTART_POLICY:-unless-stopped}
     security_opt:
       - no-new-privileges:true
