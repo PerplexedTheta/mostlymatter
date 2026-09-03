@@ -1,16 +1,18 @@
-FROM ubuntu:noble
+FROM ubuntu:noble AS builder
 
 # Setting bash as our shell, and enabling pipefail option
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Some ENV variables
 ENV PATH="/mattermost/bin:${PATH}"
+ENV MM_SERVICESETTINGS_ENABLELOCALMODE="true"
+ENV MM_INSTALL_TYPE="docker"
 
-# Build Arguments
-ARG TARGETARCH ## set by buildx
-ARG VERSION="11.10.0"
+# Some ARG variables
 ARG PUID=2000
 ARG PGID=2000
+ARG TARGETARCH ## set by buildx
+ARG VERSION="11.10.0"
 # MM_PACKAGE build arguments controls which version of mattermost to install, defaults to latest stable enterprise
 # i.e. https://releases.mattermost.com/10.12.4/mattermost-10.12.4-linux-amd64.tar.gz
 ARG MM_PACKAGE="https://releases.mattermost.com/$VERSION/mattermost-$VERSION-linux-$TARGETARCH.tar.gz"
@@ -18,11 +20,11 @@ ARG MM_PACKAGE="https://releases.mattermost.com/$VERSION/mattermost-$VERSION-lin
 # i.e. https://packages.framasoft.org/projects/mostlymatter/mostlymatter-amd64-v10.12.4
 ARG MM_OVERLOAD="https://packages.framasoft.org/projects/mostlymatter/mostlymatter-$TARGETARCH-v$VERSION"
 
-# # Install needed packages and indirect dependencies
+# Install needed packages and indirect dependencies
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-  coreutils \
   ca-certificates \
+  coreutils \
   curl \
   media-types \
   mailcap \
@@ -44,20 +46,53 @@ RUN mkdir -p /mattermost/data /mattermost/plugins /mattermost/client/plugins \
   && chmod a+x mattermost/bin/mattermost \
   && chown -R mattermost:mattermost /mattermost /mattermost/data /mattermost/plugins /mattermost/client/plugins
 
+# Create PostgreSQL client SSL directory structure for ssl_mode=require
+RUN mkdir -p /mattermost/.postgresql \
+  && chmod 700 /mattermost/.postgresql
+
+# Final stage using distroless for minimal attack surface
+FROM gcr.io/distroless/base-debian12
+
+# Copy over metadata files needed by runtime
+COPY --from=builder /etc/mime.types /etc
+
+# Copy CA certificates for SSL/TLS validation with proper ownership
+COPY --from=builder --chown=2000:2000 /etc/ssl/certs /etc/ssl/certs
+
+# Copy document processing utilities and necessary support files
+COPY --from=builder /usr/bin/pdftotext /usr/bin/pdftotext
+COPY --from=builder /usr/bin/wvText /usr/bin/wvText
+COPY --from=builder /usr/bin/wvWare /usr/bin/wvWare
+COPY --from=builder /usr/bin/unrtf /usr/bin/unrtf
+COPY --from=builder /usr/bin/tidy /usr/bin/tidy
+COPY --from=builder /usr/share/wv /usr/share/wv
+
+# Copy necessary libraries for document processing utilities
+COPY --from=builder /usr/lib/libpoppler.so* /usr/lib/
+COPY --from=builder /usr/lib/libfreetype.so* /usr/lib/
+COPY --from=builder /usr/lib/libpng.so* /usr/lib/
+COPY --from=builder /usr/lib/libwv.so* /usr/lib/
+COPY --from=builder /usr/lib/libtidy.so* /usr/lib/
+COPY --from=builder /usr/lib/libfontconfig.so* /usr/lib/
+
+# Copy mattermost from builder stage
+COPY --from=builder --chown=2000:2000 /mattermost /mattermost
+
+# Copy passwd including mattermost user
+COPY  files/passwd /etc/passwd
+
 # We should refrain from running as privileged user
 USER mattermost
 
-# Healthcheck to make sure container is ready
+# Healthcheck to make sure container is ready - using mmctl instead of curl for distroless compatibility
 HEALTHCHECK --interval=30s --timeout=10s \
   CMD ["/mattermost/bin/mmctl", "system", "status", "--local"]
 
 # Configure entrypoint and command with proper permissions
-COPY --chown=mattermost:mattermost --chmod=765 entrypoint.sh /
-ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /mattermost
-CMD ["mattermost"]
+CMD ["/mattermost/bin/mattermost"]
 
-EXPOSE 8065 8067 8074 8075
+EXPOSE 8065 8067 8074
 
 # Declare volumes for mount point directories
 VOLUME ["/mattermost/data", "/mattermost/logs", "/mattermost/config", "/mattermost/plugins", "/mattermost/client/plugins"]
