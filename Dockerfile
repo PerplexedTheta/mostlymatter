@@ -39,10 +39,10 @@ RUN apt-get update \
 RUN mkdir -p /mattermost/data /mattermost/plugins /mattermost/client/plugins \
   && groupadd --gid ${PGID} mattermost \
   && useradd --uid ${PUID} --gid ${PGID} --comment "" --home-dir /mattermost mattermost \
-  && curl -L $MM_PACKAGE | tar -xvz \
+  && curl -f -L $MM_PACKAGE | tar -xvz \
   && mv mattermost/bin/mattermost mattermost/bin/mattermost.bak \
   && chmod a-x mattermost/bin/mattermost.bak \
-  && curl -L $MM_OVERLOAD -o mattermost/bin/mattermost >/dev/null \
+  && curl -f -L $MM_OVERLOAD -o mattermost/bin/mattermost >/dev/null \
   && chmod a+x mattermost/bin/mattermost \
   && chown -R mattermost:mattermost /mattermost /mattermost/data /mattermost/plugins /mattermost/client/plugins
 
